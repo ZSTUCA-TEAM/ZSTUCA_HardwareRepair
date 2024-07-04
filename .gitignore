@@ -10,6 +10,9 @@ ZSTUCA_HardwareRepair
 *.out
 
 .idea/
+package.json
+package-lock.json
+node_modules/
 go.work
 
 conf.json
