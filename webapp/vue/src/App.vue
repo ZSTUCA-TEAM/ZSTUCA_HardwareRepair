@@ -1,4 +1,7 @@
-<script setup></script>
+<script setup>
+// 强制按日刷新请求
+document.body.style += ';background-image: url(https://api.kdcc.cn?' + new Date().getDate() + ');'
+</script>
 
 <template>
   <RouterView />
@@ -11,6 +14,6 @@ body {
 }
 
 body {
-  background: url(https://api.dujin.org/bing/1920.php) no-repeat center center;
+  background: url(https://api.kdcc.cn) no-repeat center center;
 }
 </style>
