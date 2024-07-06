@@ -147,8 +147,16 @@
             <p>{{.Text}}</p>
             <p>如有需要,请联系硬件部诸部长QQ:<a href="tencent://message/?uin=2082590035&Site=&Menu=yes">2082590035</a></p>
         </div>
-        {{end}}
 
+        {{else if eq .Type 8}}
+        <!-- 服务端内部错误通知信息 -->
+        <p>您好:</p>
+        <div class="ms-3">
+            <p>请立刻联系软研部相关负责人修复此错误!</p>
+            <p>{{.Text}}</p>
+        </div>
+
+        {{end}}
         <!-- 结尾-->
         <div class="text-end">
             <p>浙江理工大学计算机协会</p>

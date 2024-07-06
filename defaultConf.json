@@ -6,9 +6,10 @@
     "emailAddr": "imaphz.qiye.163.com",
     "emailPort": "25",
     "emailPassword": "",
+    "adminEmail": "",
     "bsAuthUsername": "",
     "bsAuthPassword": "",
-    "infoEmailForm": "",
+    "infoEmailForm": "hardware@zstuca.club",
     "infoEmailTitle": [
       "浙理计协硬件部——报修申请已提交至硬件部后台通知",
       "浙理计协硬件部——有新提交的申请通知",
@@ -17,7 +18,8 @@
       "浙理计协硬件部——已接取预约任务通知",
       "浙理计协硬件部——硬件报修申请已完成通知",
       "浙理计协硬件部——报修申请已被放弃通知",
-      "浙理计协硬件部——群发通知邮件"
+      "浙理计协硬件部——群发通知邮件",
+      "浙理计协硬件部——服务端内部错误通知"
     ]
   }
 }

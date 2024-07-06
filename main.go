@@ -4,7 +4,6 @@ import (
 	"ZSTUCA_HardwareRepair/server"
 	"ZSTUCA_HardwareRepair/server/database"
 	repairModel "ZSTUCA_HardwareRepair/server/repair/model"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/kataras/iris/v12"
 )
 

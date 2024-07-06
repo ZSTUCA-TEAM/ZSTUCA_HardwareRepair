@@ -28,6 +28,8 @@ const (
 	MessageForAbandoned
 	// MessageCustomize 自定义内容通知
 	MessageCustomize
+	// ReminderForInternalError 服务端内部错误通知
+	ReminderForInternalError
 )
 
 // SendInfoEmails 群发通知邮件

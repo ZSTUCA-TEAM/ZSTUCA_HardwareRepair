@@ -29,7 +29,13 @@ func (c *ApplyController) PostApply(apply repairModel.ApplyInfo) int {
 	} // 最近一次提交在10s内，判定为重复提交
 
 	// 存入数据库
-	database.Get().Create(&apply)
+	if err := database.Get().Create(&apply).Error; err != nil {
+		fmt.Printf("用户请求写入数据库失败:%v\n", err)
+		go tool.SendInfoEmail(repairModel.GetConf().Repair.AdminEmail, tool.ReminderForInternalError, iris.Map{
+			"Text": "用户提交的报修请求写入数据库失败!",
+		})
+		return iris.StatusInternalServerError
+	}
 	fmt.Println("apply has written it in the database")
 
 	// 向用户发送收到申请的邮件

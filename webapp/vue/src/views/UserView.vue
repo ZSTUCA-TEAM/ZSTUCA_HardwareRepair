@@ -66,6 +66,7 @@ const tableProtos = [
 // 表单结果
 let apply = reactive({})
 
+//
 const submit = () => {
   postApply(apply)
     .then((resCode) => {
@@ -73,6 +74,10 @@ const submit = () => {
         alert(
           '提交成功,已向您的邮箱发送了一份邮件,后续消息将通过邮箱通知您.如果您的邮箱自动拦截了这份邮件,请到垃圾箱中查看并设置正常接收来自我们的邮件.'
         )
+      } else if (resCode == 409) {
+        alert('您已经提交过了,请勿在10秒内重复提交.')
+      } else if (resCode == 500) {
+        alert('服务器内部错误,如可以请联系平台管理员.如稍后再试.')
       } else {
         alert('请求发送失败,请检查您的浏览器状态与网络状态.')
       }
