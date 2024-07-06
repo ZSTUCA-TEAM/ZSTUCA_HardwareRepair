@@ -2,7 +2,6 @@ package main
 
 import (
 	"ZSTUCA_HardwareRepair/server"
-	"ZSTUCA_HardwareRepair/server/database"
 	repairModel "ZSTUCA_HardwareRepair/server/repair/model"
 	"github.com/kataras/iris/v12"
 )
@@ -17,7 +16,4 @@ func main() {
 	if err := app.Listen(":" + repairModel.GetConf().ServerPort); err != nil {
 		println("Failed to start server:", err)
 	}
-
-	// 断开数据库连接
-	defer database.Close()
 }
