@@ -1,5 +1,7 @@
 package repairModel
 
+import "ZSTUCA_HardwareRepair/server/database"
+
 // WorkList 报修任务完成信息
 type WorkList struct {
 	// AdminId 外键 接取当前预约的管理员主键
@@ -20,4 +22,8 @@ type WorkList struct {
 	Duration string `json:"duration" gorm:"not null"`
 	// 	WorkContent 工作内容
 	WorkContent string `json:"workContent" gorm:"not null"`
+}
+
+func init() {
+	database.Get().AutoMigrate(&WorkList{})
 }

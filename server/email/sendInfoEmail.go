@@ -1,14 +1,11 @@
-package tool
+package email
 
 import (
-	"ZSTUCA_HardwareRepair/server/database"
-	"ZSTUCA_HardwareRepair/server/email"
-	repairModel "ZSTUCA_HardwareRepair/server/repair/model"
+	"ZSTUCA_HardwareRepair/server/conf"
 	"bytes"
 	"fmt"
 	"github.com/kataras/iris/v12"
 	"html/template"
-	"time"
 )
 
 const (
@@ -36,44 +33,25 @@ const (
 func SendInfoEmails(to []string, emailType int, content iris.Map) {
 	// 添加标识通知类型的参数
 	content["Type"] = emailType
-	content["Title"] = repairModel.GetConf().Repair.InfoEmailTitle[emailType]
+	content["Title"] = conf.GetConf().Repair.InfoEmailTitle[emailType]
 
 	// 将模板解析到字符串中
 	tpl, _ := template.ParseFiles("./webapp/template/repair/InfoEmail.html")
 	var body bytes.Buffer
 	if err := tpl.Execute(&body, content); err != nil {
-		fmt.Println("template for ", repairModel.GetConf().Repair.InfoEmailForm[emailType], " error:", err)
+		fmt.Println("template for ", conf.GetConf().Repair.InfoEmailForm[emailType], " error:", err)
 		return
 	}
 
 	// 发送邮件
-	if err := email.SendAll(repairModel.GetConf().Repair.InfoEmailForm, to, repairModel.GetConf().Repair.EmailAddr, repairModel.GetConf().Repair.EmailPort, repairModel.GetConf().Repair.EmailPassword, repairModel.GetConf().Repair.InfoEmailTitle[emailType], body.Bytes()); err != nil {
+	if err := SendAll(conf.GetConf().Repair.InfoEmailForm, to, conf.GetConf().Repair.EmailAddr, conf.GetConf().Repair.EmailPort, conf.GetConf().Repair.EmailPassword, conf.GetConf().Repair.InfoEmailTitle[emailType], body.Bytes()); err != nil {
 		fmt.Println("email send error:", err)
 		return
 	}
-	fmt.Println("email for ", repairModel.GetConf().Repair.InfoEmailTitle[emailType], " has sent")
+	fmt.Println("email for ", conf.GetConf().Repair.InfoEmailTitle[emailType], " has sent")
 }
 
 // SendInfoEmail 发送通知邮件
 func SendInfoEmail(to string, emailType int, content iris.Map) {
 	SendInfoEmails([]string{to}, emailType, content)
-}
-
-// RemindStayRequest 提醒接取滞留委托
-func RemindStayRequest() {
-	fmt.Println("reminder for stay request start")
-	limit := time.Now().Add(-48 * time.Hour)
-	var stayApplies []repairModel.ApplyInfo
-	database.Get().Where("create_at < ? AND (admin_id = 0 OR admin_id IS NULL)", limit).Find(&stayApplies)
-
-	// 没有滞留预约信息,终止执行
-	if len(stayApplies) == 0 {
-		return
-	}
-
-	// 向管理员发送提醒接取滞留预约信息的邮件
-	emails := GetAllAdminsEmail()
-	go SendInfoEmails(emails, ReminderForDelaying, iris.Map{
-		"StayApplies": stayApplies,
-	})
 }

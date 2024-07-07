@@ -1,6 +1,6 @@
 <script setup>
 import { reactive } from 'vue'
-import FormView from '@/components/FormView.vue'
+import FormComponent from '@/components/FormComponent.vue'
 import { postApply } from '@/server/ApplyService.js'
 
 // 表单描述
@@ -70,27 +70,30 @@ let apply = reactive({})
 const submit = () => {
   postApply(apply)
     .then((resCode) => {
+      // 注意不是200:OK,是201:Created
       if (resCode == 201) {
         alert(
           '提交成功,已向您的邮箱发送了一份邮件,后续消息将通过邮箱通知您.如果您的邮箱自动拦截了这份邮件,请到垃圾箱中查看并设置正常接收来自我们的邮件.'
         )
-      } else if (resCode == 409) {
-        alert('您已经提交过了,请勿在10秒内重复提交.')
-      } else if (resCode == 500) {
-        alert('服务器内部错误,如可以请联系平台管理员.如稍后再试.')
       } else {
         alert('请求发送失败,请检查您的浏览器状态与网络状态.')
       }
     })
     .catch((error) => {
-      alert('请求发送失败,请检查您的浏览器状态与网络状态.')
+      if (error.response.status == 409) {
+        alert('您已经提交过了,请勿在10秒内重复提交.')
+      } else if (error.response.status == 500) {
+        alert('服务器内部错误,如可以请联系平台管理员.或稍后再试.')
+      } else {
+        alert('请求发送失败,请检查您的浏览器状态与网络状态.')
+      }
     })
 }
 </script>
 
 <template>
-  <main class="d-flex align-items-center justify-content-center h-100 w-100">
-    <div class="d-flex flex-xl-row flex-column" id="main">
+  <main class="d-flex align-items-center justify-content-center h-100">
+    <div class="d-flex flex-xl-row flex-column align-items-center" id="main">
       <div id="title" class="text-center col-xl-6 col-12 mt-lg-5 pe-xl-5">
         <p class="h1 mt-5 mb-3"><b>浙理计算机协会</b></p>
         <p class="h1 mb-4"><b>硬件部报修平台</b></p>
@@ -100,8 +103,8 @@ const submit = () => {
         </p>
         <p class="small">后续会推出催接委托功能.</p>
       </div>
-      <FormView
-        class="col-xl-6 col-12 pt-xl-3 flex-shrink-1 px-3"
+      <FormComponent
+        class="col-xl-6 col-12 pt-xl-3 flex-shrink-1 px-3 h-100 overflow-scroll overflow-x-hidden"
         id="formView"
         :protos="tableProtos"
         v-model="apply"

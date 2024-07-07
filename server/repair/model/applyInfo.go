@@ -1,6 +1,9 @@
 package repairModel
 
-import "time"
+import (
+	"ZSTUCA_HardwareRepair/server/database"
+	"time"
+)
 
 // ApplyInfo 报修申请信息模型
 type ApplyInfo struct {
@@ -38,4 +41,8 @@ type ApplyInfo struct {
 	IsFinish bool `gorm:"not null"`
 	// IsAbandoned 当前预约任务是否被放弃
 	IsAbandoned bool `gorm:"not null"`
+}
+
+func init() {
+	database.Get().AutoMigrate(&ApplyInfo{})
 }

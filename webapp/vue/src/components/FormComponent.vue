@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, onUpdated } from 'vue'
+import { onBeforeMount } from 'vue'
 
 const props = defineProps({
   // 表单描述对象
@@ -43,7 +43,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <form class="h-100 overflow-scroll overflow-x-hidden" @submit.prevent="props.onsubmit">
+  <form @submit.prevent="props.onsubmit">
     <div class="my-3" v-for="proto in props.protos">
       <!-- 表单单项标签 -->
       <label class="form-label" :for="proto.name">{{ proto.title }}</label>
@@ -58,7 +58,11 @@ onBeforeMount(() => {
         <!-- 文本输入 -->
         <input
           class="form-control"
-          v-if="(getTrueType(proto.type) == 'text') | (getTrueType(proto.type) == 'email')"
+          v-if="
+            (getTrueType(proto.type) == 'text') |
+              (getTrueType(proto.type) == 'email') |
+              (getTrueType(proto.type) == 'password')
+          "
           :required="proto.required"
           :type="getTrueType(proto.type)"
           :id="proto.name"

@@ -1,15 +1,15 @@
 package server
 
 import (
+	"ZSTUCA_HardwareRepair/server/database"
+	"ZSTUCA_HardwareRepair/server/email"
 	repairController "ZSTUCA_HardwareRepair/server/repair/controller"
 	repairModel "ZSTUCA_HardwareRepair/server/repair/model"
-	"ZSTUCA_HardwareRepair/server/repair/tool"
 	"fmt"
 	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/middleware/basicauth"
 	"github.com/kataras/iris/v12/mvc"
-	"github.com/kataras/iris/v12/sessions"
 	"github.com/robfig/cron/v3"
+	"time"
 )
 
 // Handle 绑定资源
@@ -66,23 +66,29 @@ func handleRepair(app *iris.Application) {
 	mvc.New(app.Party("/")).Handle(new(repairController.ApplyController))
 
 	// 绑定管理员后台
-	bs := app.Party("/bs")
-	// Basic Authentication认证中间件
-	auth := basicauth.Default(map[string]string{
-		repairModel.GetConf().Repair.BsAuthUsername: repairModel.GetConf().Repair.BsAuthPassword,
-	})
-	bs.Use(auth)
-	// Session中间件
-	sess := sessions.New(sessions.Config{
-		Cookie:                      "adminInfo",
-		DisableSubdomainPersistence: true,
-	})
-	bs.Use(sess.Handler())
-	mvc.New(bs).Handle(new(repairController.BackstageController))
+	mvc.New(app.Party("/bs")).Handle(new(repairController.BackstageController))
+}
 
+func init() {
 	// 创建任务调度器,每天12点调用,提醒滞留请求
 	c := cron.New()
-	_, err := c.AddFunc("0 12 * * *", tool.RemindStayRequest)
+	_, err := c.AddFunc("0 12 * * *", func() {
+		fmt.Println("reminder for stay request start")
+		limit := time.Now().Add(-48 * time.Hour)
+		var stayApplies []repairModel.ApplyInfo
+		database.Get().Where("create_at < ? AND (admin_id = 0 OR admin_id IS NULL)", limit).Find(&stayApplies)
+
+		// 没有滞留预约信息,终止执行
+		if len(stayApplies) == 0 {
+			return
+		}
+
+		// 向管理员发送提醒接取滞留预约信息的邮件
+		emails := repairModel.GetAllAdminsEmail()
+		go email.SendInfoEmails(emails, email.ReminderForDelaying, iris.Map{
+			"StayApplies": stayApplies,
+		})
+	})
 	if err != nil {
 		fmt.Println("cron create err:", err)
 	} else {

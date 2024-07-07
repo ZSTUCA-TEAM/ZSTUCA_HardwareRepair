@@ -1,9 +1,10 @@
 package repairController
 
 import (
+	"ZSTUCA_HardwareRepair/server/conf"
 	"ZSTUCA_HardwareRepair/server/database"
+	"ZSTUCA_HardwareRepair/server/email"
 	repairModel "ZSTUCA_HardwareRepair/server/repair/model"
-	"ZSTUCA_HardwareRepair/server/repair/tool"
 	"fmt"
 	"github.com/kataras/iris/v12"
 	"time"
@@ -31,7 +32,7 @@ func (c *ApplyController) PostApply(apply repairModel.ApplyInfo) int {
 	// 存入数据库
 	if err := database.Get().Create(&apply).Error; err != nil {
 		fmt.Printf("用户请求写入数据库失败:%v\n", err)
-		go tool.SendInfoEmail(repairModel.GetConf().Repair.AdminEmail, tool.ReminderForInternalError, iris.Map{
+		go email.SendInfoEmail(conf.GetConf().Repair.AdminEmail, email.ReminderForInternalError, iris.Map{
 			"Text": "用户提交的报修请求写入数据库失败!",
 		})
 		return iris.StatusInternalServerError
@@ -39,12 +40,12 @@ func (c *ApplyController) PostApply(apply repairModel.ApplyInfo) int {
 	fmt.Println("apply has written it in the database")
 
 	// 向用户发送收到申请的邮件
-	go tool.SendInfoEmail(apply.Email, tool.MessageForSubmission, iris.Map{
+	go email.SendInfoEmail(apply.Email, email.MessageForSubmission, iris.Map{
 		"ApplyInfo": apply,
 	})
 
 	// 利用模板引擎生成内部通知的邮件
-	go tool.SendInfoEmails(tool.GetAllAdminsEmail(), tool.ReminderForSubmission, iris.Map{
+	go email.SendInfoEmails(repairModel.GetAllAdminsEmail(), email.ReminderForSubmission, iris.Map{
 		"ApplyInfo": apply,
 	})
 
