@@ -12,7 +12,6 @@ const router = createRouter({
       path: '/bs',
       name: 'backstageView',
       component: () => import('@/views/BackstageView.vue'),
-      strict: true,
       children: [
         {
           path: '',
@@ -20,7 +19,7 @@ const router = createRouter({
           component: () => import('@/views/backstage/LoginView.vue')
         },
         {
-          path: 'pendingTasks/',
+          path: 'pendingTasks',
           name: 'pedingTasksView',
           component: () => import('@/views/backstage/PendingTasksView.vue'),
           meta: {
@@ -28,21 +27,31 @@ const router = createRouter({
           }
         },
       ]
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: '404',
+      component: () => import('@/views/UserView.vue')
     }
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach((to, from, next) => {
   const store = useBackstageStore()
   // 鉴权需要登录的页面
   if (to.meta.requireLogin && !store.jwt) {
     alert('登录已过期,请先登录')
-    return '/bs/'
+    next({ path: '/bs/' })
   }
   // 自动补全结尾的/,以便使用相对路径
   if (to.path == '/bs') {
-    return '/bs/'
+    next({ path: '/bs/', replace: true })
   }
+  // 防止登录后再次登录
+  if (to.path == '/bs/' && store.jwt) {
+    next({ path: '/bs/pendingTasks', replace: true })
+  }
+  next()
 })
 
 export default router

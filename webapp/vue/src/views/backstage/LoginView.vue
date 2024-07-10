@@ -24,7 +24,7 @@ let userInfo = reactive({})
 const submit = () => {
   postLogin(userInfo)
     .then((resCode) => {
-      router.push('pendingTasks/')
+      router.replace('pendingTasks')
     })
     .catch((error) => {
       if (error.response.stauts == 500) {
@@ -40,7 +40,7 @@ const submit = () => {
 
 <template>
   <div
-    class="d-flex h-100 w-100 flex-xl-row flex-column justify-content-center align-content-center"
+    class="d-flex h-100 w-100 flex-xl-row flex-column justify-content-center align-content-center flex-wrap"
   >
     <div class="col-xl-6 col-12">
       <p class="h1 text-center mt-5">浙理计协硬件部报修后台</p>

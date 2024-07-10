@@ -18,13 +18,10 @@ type ApplyController struct {
 func (c *ApplyController) PostApply(apply repairModel.ApplyInfo) int {
 	fmt.Println("apply get input:", apply)
 
-	// 获取当前时间
-	apply.CreateAt = time.Now()
-
 	// 确认是否重复提交
 	var prevTimes []time.Time
-	database.Get().Model(&repairModel.ApplyInfo{}).Where("name=? AND card_id=?", apply.Name, apply.CardId).Order("create_at DESC").Pluck("create_at", &prevTimes)
-	if len(prevTimes) >= 1 && int(apply.CreateAt.Sub(prevTimes[0]).Seconds()) <= 10 {
+	database.Get().Model(&repairModel.ApplyInfo{}).Where("name=? AND card_id=?", apply.Name, apply.CardId).Order("created_at DESC").Pluck("created_at", &prevTimes)
+	if len(prevTimes) >= 1 && int(time.Now().Sub(prevTimes[0]).Seconds()) <= 10 {
 		fmt.Println("apply repeatedly submitted")
 		return iris.StatusConflict
 	} // 最近一次提交在10s内，判定为重复提交

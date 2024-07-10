@@ -21,23 +21,23 @@
       <div class="collapse navbar-collapse" id="collapsibleNavbar">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <RouterLink class="nav-link" to="pendingTasks/">待接取的任务</RouterLink>
+            <RouterLink class="nav-link" to="pendingTasks">待接取的任务</RouterLink>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" to="receiptedTasks/">已接取的任务</RouterLink>
+            <RouterLink class="nav-link" to="receiptedTasks">已接取的任务</RouterLink>
           </li>
           <li class="nav-item d-none">
-            <RouterLink class="nav-link" to="allTasks/">所有委托信息</RouterLink>
+            <RouterLink class="nav-link" to="allTasks">所有委托信息</RouterLink>
           </li>
           <li class="nav-item d-none">
-            <RouterLink class="nav-link" to="adminRegister/">硬件部成员注册</RouterLink>
+            <RouterLink class="nav-link" to="adminRegister">硬件部成员注册</RouterLink>
           </li>
         </ul>
       </div>
     </nav>
 
     <main class="flex-shrink-1 h-100">
-      <RouterView class="container-fluid row"></RouterView>
+      <RouterView></RouterView>
     </main>
   </div>
 </template>

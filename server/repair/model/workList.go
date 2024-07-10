@@ -1,19 +1,22 @@
 package repairModel
 
-import "ZSTUCA_HardwareRepair/server/database"
+import (
+	"ZSTUCA_HardwareRepair/server/database"
+	"fmt"
+)
 
 // WorkList 报修任务完成信息
 type WorkList struct {
 	// AdminId 外键 接取当前预约的管理员主键
 	AdminId uint `json:"adminId" gorm:"not null"`
 	// Admin 接取当前预约的管理员对象
-	Admin AdminInfo `gorm:"foreignKey:AdminId"`
+	Admin AdminInfo `gorm:"foreignKey:AdminId;references:ID"`
 	// OtherAdmin 其他参与人员
 	OtherAdmin string `json:"otherAdmin"`
 	// ApplyId 外键 当前预约的主键
 	ApplyId uint `json:"applyId" gorm:"not null"`
 	// Apply 当前预约的对象
-	Apply ApplyInfo `gorm:"foreignKey:ApplyId"`
+	Apply ApplyInfo `gorm:"foreignKey:ApplyId;references:ID"`
 	// Time 预约完成时间
 	Time string `json:"time" gorm:"not null"`
 	// Location 地点
@@ -25,5 +28,7 @@ type WorkList struct {
 }
 
 func init() {
-	database.Get().AutoMigrate(&WorkList{})
+	if err := database.Get().AutoMigrate(&WorkList{}); err != nil {
+		panic(fmt.Sprintf("WorkList自动建表失败:%v\n", err))
+	}
 }

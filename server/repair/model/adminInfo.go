@@ -5,6 +5,7 @@ import (
 	"ZSTUCA_HardwareRepair/server/database"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mitchellh/mapstructure"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
@@ -34,7 +35,7 @@ type AdminInfo struct {
 }
 
 // CheckAdminPassword 根据管理员用户名和密码取出管理员
-func (admin AdminInfo) CheckAdminPassword() bool {
+func (admin *AdminInfo) CheckAdminPassword() bool {
 	password := admin.Password
 	// 在数据库中查找当前用户名
 	fmt.Println("数据库中查询管理员信息")
@@ -47,6 +48,7 @@ func (admin AdminInfo) CheckAdminPassword() bool {
 }
 
 func (admin AdminInfo) GetJWT() (signedToken string, err error) {
+	admin.Password = ""
 	claims := jwt.MapClaims{
 		"admin": admin,
 		"exp":   time.Now().Add(time.Hour * 24 * 7 * 2).Unix(),
@@ -56,6 +58,22 @@ func (admin AdminInfo) GetJWT() (signedToken string, err error) {
 	return
 }
 
+func GetAdminFromJWT(token string) (*AdminInfo, error) {
+	if token, err := jwt.ParseWithClaims(token, &jwt.MapClaims{}, func(token *jwt.Token) (any, error) {
+		return conf.GetConf().PublicKey, nil
+	}); err != nil {
+		return nil, err
+	} else {
+		claims := token.Claims.(*jwt.MapClaims)
+		admin := (*claims)["admin"].(map[string]any)
+		adminInfo := AdminInfo{}
+		if err := mapstructure.Decode(admin, &adminInfo); err != nil {
+			return nil, err
+		}
+		return &adminInfo, nil
+	}
+}
+
 // GetAllAdminsEmail 获取所有管理员的邮箱
 func GetAllAdminsEmail() (emails []string) {
 	database.Get().Model(&AdminInfo{}).Pluck("email", &emails) // 获取所有管理员的邮件
@@ -63,5 +81,7 @@ func GetAllAdminsEmail() (emails []string) {
 }
 
 func init() {
-	database.Get().AutoMigrate(AdminInfo{})
+	if err := database.Get().AutoMigrate(AdminInfo{}); err != nil {
+		panic(fmt.Sprintf("AdminInfo自动建表失败:%v\n", err))
+	}
 }

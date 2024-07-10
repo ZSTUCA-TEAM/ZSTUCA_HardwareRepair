@@ -2,6 +2,7 @@ package repairController
 
 import (
 	"ZSTUCA_HardwareRepair/server/conf"
+	"ZSTUCA_HardwareRepair/server/database"
 	repairModel "ZSTUCA_HardwareRepair/server/repair/model"
 	"fmt"
 	"github.com/kataras/iris/v12"
@@ -10,6 +11,23 @@ import (
 
 // BackstageController 硬件部后端控制器
 type BackstageController struct {
+}
+
+func (c *BackstageController) BeforeActivation(b mvc.BeforeActivation) {
+	b.Router().Use(func(c iris.Context) {
+		auth := c.GetHeader("Authorization")
+		if auth == "" {
+			c.Values().Set("admin", nil)
+		} else {
+			fmt.Println("管理员jwt:", auth)
+			if admin, err := repairModel.GetAdminFromJWT(auth); err != nil {
+				fmt.Println("jwt转换管理员对象失败", err)
+			} else {
+				c.Values().Set("admin", admin)
+			}
+		}
+		c.Next()
+	})
 }
 
 // GetPub 获取公钥
@@ -27,7 +45,8 @@ func (c *BackstageController) PostLogin(admin repairModel.AdminInfo) mvc.Result 
 	if !admin.CheckAdminPassword() {
 		fmt.Println("管理员用户名或密码错误")
 		return mvc.Response{
-			Code: iris.StatusUnauthorized,
+			ContentType: "application/jwt",
+			Code:        iris.StatusUnauthorized,
 		}
 	}
 
@@ -45,98 +64,46 @@ func (c *BackstageController) PostLogin(admin repairModel.AdminInfo) mvc.Result 
 	}
 }
 
-// GetDivBy 管理员获取指定页面,Get请求方式,相对路径./div/{divName: string}
-//func (c *BackstageController) GetDivBy(ctx iris.Context, divName string) mvc.Result {
-//	// 获取当前管理员对象
-//	sess := sessions.Get(ctx)
-//	admin, err := tool.CheckAdminPassword(sess.GetString("username"), sess.GetString("password"))
-//	if err != nil {
-//		fmt.Println("can't get admin info from session")
-//		// 当前管理员不存在,需要重新登录
-//		return mvc.Response{
-//			Code: iris.StatusSeeOther,
-//			Path: "/repair/bs",
-//		}
-//	}
-//
-//	// 返回相应界面
-//	if divName == "pendingTasks" { // 接取新的委托
-//		// 读取未接取的预约信息
-//		var applyInfo []repairModel.ApplyInfo
-//		database.Get().Where("(admin_id IS NULL OR admin_id = 0) AND is_abandoned = 0").Find(&applyInfo)
-//		fmt.Println("admin ", admin.ID, " change div to ", divName)
-//		return mvc.View{
-//			Name: "repair/PendingTasks.html",
-//			Data: iris.Map{
-//				"ApplyInfo": applyInfo,
-//			},
-//		}
-//	} else if divName == "receiptedTasks" { // 查看已接取的委托
-//		// 读取当前管理员已接取的预约信息
-//		var applyInfo []repairModel.ApplyInfo
-//		// 获取查询参数
-//		showFinish, _ := ctx.URLParamBool("showFinish")
-//		showAbandoned, _ := ctx.URLParamBool("showAbandoned")
-//		if showFinish && showAbandoned {
-//			// 全部显示
-//			database.Get().Where("admin_id = ?", admin.ID).Find(&applyInfo)
-//		} else if showFinish {
-//			// 不显示已放弃
-//			database.Get().Where("admin_id = ? AND is_abandoned = false", admin.ID).Find(&applyInfo)
-//		} else if showAbandoned {
-//			// 不显示已完成
-//			database.Get().Where("admin_id = ? AND is_finish = false", admin.ID).Find(&applyInfo)
-//		} else {
-//			// 均不显示
-//			database.Get().Where("admin_id = ? AND is_abandoned = false AND is_finish = false", admin.ID).Find(&applyInfo)
-//		}
-//		fmt.Println("admin ", admin.ID, " change div to ", divName)
-//		return mvc.View{
-//			Name: "repair/ReceiptedTasks.html",
-//			Data: iris.Map{
-//				"ApplyInfo": applyInfo,
-//			},
-//		}
-//	} else if !admin.IsRootAdmin { // 剩下的界面只有管理员可以访问
-//		return mvc.Response{
-//			Code: iris.StatusBadRequest,
-//		}
-//	} else if divName == "allTasks" { // 查看所有委托信息
-//		fmt.Println("admin ", admin.ID, " change div to ", divName)
-//		var applyInfo []repairModel.ApplyInfo
-//		// 获取查询参数
-//		showFinish, _ := ctx.URLParamBool("showFinish")
-//		showAbandoned, _ := ctx.URLParamBool("showAbandoned")
-//		if showFinish && showAbandoned {
-//			// 全部显示
-//			database.Get().Preload("Admin").Find(&applyInfo)
-//		} else if showFinish {
-//			// 不显示已放弃
-//			database.Get().Preload("Admin").Where("is_abandoned = false").Find(&applyInfo)
-//		} else if showAbandoned {
-//			// 不显示已完成
-//			database.Get().Preload("Admin").Where("is_finish = false").Find(&applyInfo)
-//		} else {
-//			// 均不显示
-//			database.Get().Preload("Admin").Where("is_abandoned = false AND is_finish = false").Find(&applyInfo)
-//		}
-//		return mvc.View{
-//			Name: "repair/AllTasks.html",
-//			Data: iris.Map{
-//				"ApplyInfo": applyInfo,
-//			},
-//		}
-//	} else if divName == "adminRegister" { // 注册硬件部成员
-//		fmt.Println("admin ", admin.ID, " change div to ", divName)
-//		return mvc.View{
-//			Name: "repair/AdminRegister.html",
-//			Data: iris.Map{},
-//		}
-//	}
-//	return mvc.Response{
-//		Code: iris.StatusBadRequest,
-//	}
-//}
+// GetApplyBy 管理员获取指定页面,Get请求方式
+func (c *BackstageController) GetApplyBy(ctx iris.Context, contentType string) mvc.Result {
+	// 获取当前管理员对象
+	adminInfo := ctx.Values().Get("admin").(*repairModel.AdminInfo)
+
+	if adminInfo == nil {
+		fmt.Println("管理员未登录")
+		return mvc.Response{
+			Code: iris.StatusUnauthorized,
+		}
+	}
+
+	var applyInfo []repairModel.ApplyInfo
+	// 返回相应界面
+	if contentType == "new" { // 接取新的委托
+		// 读取未接取的预约信息
+		database.Get().Where("admin_id IS NULL AND is_abandoned = 0").Find(&applyInfo)
+		fmt.Println("管理员", adminInfo.ID, "访问所有新委托")
+	} else if contentType == "my" { // 查看已接取的委托
+		// 读取当前管理员已接取的预约信息
+		database.Get().Where("admin_id = ?", adminInfo.ID).Find(&applyInfo)
+		fmt.Println("管理员", adminInfo.ID, "访问自己已接取的委托")
+	} else if !adminInfo.IsRootAdmin { // 剩下的查询只有根管理员可以进行
+		fmt.Println("管理员", adminInfo.ID, "权限不足")
+		return mvc.Response{
+			Code: iris.StatusForbidden,
+		}
+	} else if contentType == "all" { // 查看所有委托信息
+		fmt.Println("根管理员", adminInfo.ID, "访问所有委托信息")
+		database.Get().Preload("Admin").Find(&applyInfo)
+	} else {
+		return mvc.Response{
+			Code: iris.StatusBadRequest,
+		}
+	}
+	return mvc.Response{
+		Object: applyInfo,
+	}
+}
+
 //
 //// PostReceive 管理员接取预约,Post请求方式，相对路径./receive
 //func (c *BackstageController) PostReceive(ctx iris.Context, applyInfo repairModel.ApplyInfo) mvc.Result {

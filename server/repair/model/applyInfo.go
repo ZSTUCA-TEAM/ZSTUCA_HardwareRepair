@@ -2,6 +2,8 @@ package repairModel
 
 import (
 	"ZSTUCA_HardwareRepair/server/database"
+	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -32,11 +34,11 @@ type ApplyInfo struct {
 	// Location 门牌号
 	Location string `json:"location" gorm:"type:text;not null"`
 	// AdminId 外键 接取当前预约的管理员主键
-	AdminId uint `json:"adminId"`
+	AdminId sql.NullInt64 `json:"adminId"`
 	// Admin 接取当前预约的管理员对象
-	Admin AdminInfo `gorm:"foreignKey:AdminId"`
-	// CreateAt 当前预约创建时间
-	CreateAt time.Time
+	Admin AdminInfo `gorm:"foreignKey:AdminId;references:ID"`
+	// CreatedAt 当前预约创建时间
+	CreatedAt time.Time
 	// IsFinish 当前预约任务是否已完成
 	IsFinish bool `gorm:"not null"`
 	// IsAbandoned 当前预约任务是否被放弃
@@ -44,5 +46,7 @@ type ApplyInfo struct {
 }
 
 func init() {
-	database.Get().AutoMigrate(&ApplyInfo{})
+	if err := database.Get().AutoMigrate(&ApplyInfo{}); err != nil {
+		panic(fmt.Sprintf("ApplyInfo自动建表失败:%v\n", err))
+	}
 }
